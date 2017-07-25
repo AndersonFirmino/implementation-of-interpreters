@@ -3,7 +3,7 @@
 # Syntax:
 #     expr ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::=integer
+#     factor ::= integer
 #     integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
 ###########################################################
 
@@ -103,6 +103,7 @@ class Scanner:
 ###########################################################
 # Parser
 ###########################################################
+from ast import *
 class Parser:
     def __init__(self, scanner):
         self.scanner = scanner
@@ -130,41 +131,43 @@ class Parser:
         '''
         token = self.scanner.currentToken
         self.match(INTEGER)
-        return int(token.text)
+        return IntegerNode(token)
 
     def term(self):
         '''
         Recursive-descent parsing procedure for term:
         term ::= factor (('*'|'/') factor)*
         '''
-        result = self.factor()
+        root = self.factor()
 
         while self.scanner.currentToken.type in (MUL, DIV):
             token = self.scanner.currentToken
             self.scanner.nextToken()
-            if token.type == MUL:
-                result *= self.factor()
-            else:
-                result /= self.factor()
+            lhs = root
+            rhs = self.factor()
+            root = BinaryExprNode(token)
+            root.addChild(lhs)
+            root.addChild(rhs)
 
-        return result
+        return root
 
     def expr(self):
         '''
         Recursive-descent parsing procedure for expr:
-        expr ::= term (('+'|'-') term)*
+        expr::= term (('+'|'-') term)*
         '''
-        result = self.term()
+        root = self.term()
 
         while self.scanner.currentToken.type in (PLUS, MINUS):
             token = self.scanner.currentToken
             self.scanner.nextToken()
-            if token.type == PLUS:
-                result += self.term()
-            else:
-                result -= self.term()
+            lhs = root
+            rhs = self.term()
+            root = BinaryExprNode(token)
+            root.addChild(lhs)
+            root.addChild(rhs)
 
-        return result
+        return root
 
 ###########################################################
 # Top-level script tests
@@ -185,6 +188,8 @@ if __name__ == '__main__':
         try:
             scanner = Scanner(TextStream(text))
             parser = Parser(scanner)
-            print(parser.expr())
+            root = parser.expr()
+            visitor = PrintVisitor()
+            root.accept(visitor)
         except Exception as e:
             print(e)

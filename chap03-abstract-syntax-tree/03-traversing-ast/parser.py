@@ -3,7 +3,8 @@
 # Syntax:
 #     expr ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::=integer
+#     factor ::= integer | ('+'|'-') factor | '(' expr ')'
+#     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
 #     integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
 ###########################################################
 
@@ -34,8 +35,8 @@ class TextStream:
 # Token
 ###########################################################
 # Token types
-INTEGER, PLUS, MINUS, MUL, DIV, EOF = (
-    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', 'EOF'
+INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, EOF = (
+    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', 'LPAREN', 'RPAREN', 'EOF'
     )
 class Token:
     def __init__(self, type, text, position):
@@ -86,6 +87,12 @@ class Scanner:
         elif textStream.currentChar == '/':
             self.currentToken = Token(DIV, '/', position)
             self.textStream.nextChar()
+        elif textStream.currentChar == '(':
+            self.currentToken = Token(LPAREN, '(', position)
+            self.textStream.nextChar()
+        elif textStream.currentChar == ')':
+            self.currentToken = Token(RPAREN, ')', position)
+            self.textStream.nextChar()
         else:
             self.error()
 
@@ -103,6 +110,7 @@ class Scanner:
 ###########################################################
 # Parser
 ###########################################################
+from ast import *
 class Parser:
     def __init__(self, scanner):
         self.scanner = scanner
@@ -126,45 +134,58 @@ class Parser:
     def factor(self):
         '''
         Recursive-descent parsing procedure for factor:
-        factor ::= integer
+        factor ::= integer | ('+'|'-') factor | '(' expr ')'
         '''
         token = self.scanner.currentToken
-        self.match(INTEGER)
-        return int(token.text)
+        if token.type in (PLUS, MINUS):
+            self.scanner.nextToken()
+            root = UnaryExprNode(token)
+            root.addChild(self.factor())
+            return root
+        elif token.type == INTEGER:
+            self.match(INTEGER)
+            return IntegerNode(token)
+        elif token.type == LPAREN:
+            self.match(LPAREN)
+            root = self.expr()
+            self.match(RPAREN)
+            return root
 
     def term(self):
         '''
         Recursive-descent parsing procedure for term:
         term ::= factor (('*'|'/') factor)*
         '''
-        result = self.factor()
+        root = self.factor()
 
         while self.scanner.currentToken.type in (MUL, DIV):
             token = self.scanner.currentToken
             self.scanner.nextToken()
-            if token.type == MUL:
-                result *= self.factor()
-            else:
-                result /= self.factor()
+            lhs = root
+            rhs = self.factor()
+            root = BinaryExprNode(token)
+            root.addChild(lhs)
+            root.addChild(rhs)
 
-        return result
+        return root
 
     def expr(self):
         '''
         Recursive-descent parsing procedure for expr:
         expr ::= term (('+'|'-') term)*
         '''
-        result = self.term()
+        root = self.term()
 
         while self.scanner.currentToken.type in (PLUS, MINUS):
             token = self.scanner.currentToken
             self.scanner.nextToken()
-            if token.type == PLUS:
-                result += self.term()
-            else:
-                result -= self.term()
+            lhs = root
+            rhs = self.term()
+            root = BinaryExprNode(token)
+            root.addChild(lhs)
+            root.addChild(rhs)
 
-        return result
+        return root
 
 ###########################################################
 # Top-level script tests
@@ -185,6 +206,8 @@ if __name__ == '__main__':
         try:
             scanner = Scanner(TextStream(text))
             parser = Parser(scanner)
-            print(parser.expr())
+            root = parser.expr()
+            visitor = PrintVisitor()
+            root.accept(visitor)
         except Exception as e:
             print(e)
