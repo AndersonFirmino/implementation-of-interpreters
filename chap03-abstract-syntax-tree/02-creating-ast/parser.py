@@ -8,9 +8,9 @@
 ###########################################################
 
 ###########################################################
-# TextStream -- an input stream of characters
+# CharStream -- an input stream of characters
 ###########################################################
-class TextStream:
+class CharStream:
     def __init__(self, text):
         self.text = text     # source code
         self.position = -1   # current position
@@ -53,39 +53,39 @@ class Token:
 # Scanner
 ###########################################################
 class Scanner:
-    def __init__(self, textStream):
-        self.textStream = textStream # source code
+    def __init__(self, charStream):
+        self.charStream = charStream # source code
         self.nextToken()
 
     def error(self):
         raise Exception('{position} : Invalid character \'{char}\'!'.format(
-            position = self.textStream.position,
-            char = self.textStream.currentChar))
+            position = self.charStream.position,
+            char = self.charStream.currentChar))
 
     def nextToken(self):
         '''
         Consume the current token and return the next token.
         '''
-        textStream = self.textStream
-        textStream.skipWhiteSpace()
-        position = textStream.position
+        charStream = self.charStream
+        charStream.skipWhiteSpace()
+        position = charStream.position
 
-        if textStream.currentChar is None:
+        if charStream.currentChar is None:
             self.currentToken = Token(EOF, None, position)
-        elif textStream.currentChar.isdigit():
+        elif charStream.currentChar.isdigit():
             self.currentToken = Token(INTEGER, self.digits(), position)
-        elif textStream.currentChar == '+':
+        elif charStream.currentChar == '+':
             self.currentToken = Token(PLUS, '+', position)
-            self.textStream.nextChar()
-        elif textStream.currentChar == '-':
+            self.charStream.nextChar()
+        elif charStream.currentChar == '-':
             self.currentToken = Token(MINUS, '-', position)
-            self.textStream.nextChar()
-        elif textStream.currentChar == '*':
+            self.charStream.nextChar()
+        elif charStream.currentChar == '*':
             self.currentToken = Token(MUL, '*', position)
-            self.textStream.nextChar()
-        elif textStream.currentChar == '/':
+            self.charStream.nextChar()
+        elif charStream.currentChar == '/':
             self.currentToken = Token(DIV, '/', position)
-            self.textStream.nextChar()
+            self.charStream.nextChar()
         else:
             self.error()
 
@@ -95,9 +95,10 @@ class Scanner:
         integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
         '''
         result = ''
-        while(self.textStream.currentChar is not None and self.textStream.currentChar.isdigit()):
-            result += self.textStream.currentChar
-            self.textStream.nextChar()
+        while(self.charStream.currentChar is not None and
+        self.charStream.currentChar.isdigit()):
+            result += self.charStream.currentChar
+            self.charStream.nextChar()
         return result
 
 ###########################################################
@@ -186,7 +187,7 @@ if __name__ == '__main__':
             continue
 
         try:
-            scanner = Scanner(TextStream(text))
+            scanner = Scanner(CharStream(text))
             parser = Parser(scanner)
             root = parser.expr()
             visitor = PrintVisitor()

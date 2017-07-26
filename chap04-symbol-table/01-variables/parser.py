@@ -1,11 +1,14 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
+#     chunk ::= assignment +
+#     assignment ::= var '=' expr
 #     expr ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::= integer | ('+'|'-') factor | '(' expr ')'
+#     factor ::= integer | ('+'|'-') factor | '(' expr ')' | var
 #     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
-#     integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
+#     integer ::= digit +
+#     var ::= letter (letter | digit) *
 ###########################################################
 
 ###########################################################
@@ -35,9 +38,14 @@ class CharStream:
 # Token
 ###########################################################
 # Token types
-INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, EOF = (
-    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', 'LPAREN', 'RPAREN', 'EOF'
+INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, VAR, ASSIGN, EOF = (
+    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', 'LPAREN', 'RPAREN', 'VAR', 'ASSIGN', 'EOF',
     )
+
+# Phony token types -- Used in creating AST nodes that don't derived from tokens
+# So, we can get node type va token.type
+CHUNK = ('CHUNK')
+
 class Token:
     def __init__(self, type, text, position):
         self.type = type         # token type
@@ -49,6 +57,10 @@ class Token:
             position = self.position,
             type = self.type,
             text = self.text)
+
+class PhonyToken(Token):
+    def __init__(self, type, position):
+        Token.__init__(self, type, '_phony_', position)
 
 ###########################################################
 # Scanner
@@ -74,7 +86,9 @@ class Scanner:
         if charStream.currentChar is None:
             self.currentToken = Token(EOF, None, position)
         elif charStream.currentChar.isdigit():
-            self.currentToken = Token(INTEGER, self.digits(), position)
+            self.currentToken = self.digits()
+        elif charStream.currentChar.isalpha():
+            self.currentToken = self.word()
         elif charStream.currentChar == '+':
             self.currentToken = Token(PLUS, '+', position)
             self.charStream.nextChar()
@@ -93,6 +107,9 @@ class Scanner:
         elif charStream.currentChar == ')':
             self.currentToken = Token(RPAREN, ')', position)
             self.charStream.nextChar()
+        elif charStream.currentChar == '=':
+            self.currentToken = Token(ASSIGN, '=', position)
+            self.charStream.nextChar()
         else:
             self.error()
 
@@ -101,11 +118,27 @@ class Scanner:
         Extract a unsigned integer token from the source.
         integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
         '''
-        result = ''
-        while(self.charStream.currentChar is not None and self.charStream.currentChar.isdigit()):
-            result += self.charStream.currentChar
+        position = self.charStream.position
+        text = ''
+        while(self.charStream.currentChar is not None and
+        self.charStream.currentChar.isdigit()):
+            text += self.charStream.currentChar
             self.charStream.nextChar()
-        return result
+        return Token(INTEGER, text, position)
+
+    def word(self):
+        '''
+        Extract word tokens (identifiers and reserved words).
+        var ::= letter (letter | digit) *
+        '''
+        position = self.charStream.position
+        text = ''
+        while(self.charStream.currentChar is not None and
+        (self.charStream.currentChar.isdigit() or
+        self.charStream.currentChar.isalpha())):
+            text += self.charStream.currentChar
+            self.charStream.nextChar()
+        return Token(VAR, text, position)
 
 ###########################################################
 # Parser
@@ -116,18 +149,20 @@ class Parser:
         self.scanner = scanner
 
     def error(self):
-        raise Exception('{position} : Syntax error at \'{text}\'!'.format(
+        text = self.scanner.currentToken.text
+        raise Exception('{position} : Syntax error around \'{text}\'!'.format(
             position = self.scanner.currentToken.position,
-            text = self.scanner.currentToken.text))
+            text = text if text else 'EOF'))
 
     def match(self, type):
         '''
         Compare the current token type with the passed token type and if they
         match then consume the current token otherwise raise an exception.
         '''
-        if self.scanner.currentToken.type == type:
+        token = self.scanner.currentToken
+        if token.type == type:
             self.scanner.nextToken()
-            return True
+            return token
         else:
             self.error()
 
@@ -145,11 +180,16 @@ class Parser:
         elif token.type == INTEGER:
             self.match(INTEGER)
             return IntegerNode(token)
+        elif token.type == VAR:
+            self.match(VAR)
+            return VarNode(token)
         elif token.type == LPAREN:
             self.match(LPAREN)
             root = self.expr()
             self.match(RPAREN)
             return root
+        else:
+            self.error()
 
     def term(self):
         '''
@@ -187,6 +227,34 @@ class Parser:
 
         return root
 
+    def assignment(self):
+        '''
+        Recursive-descent parsing procedure for assignment:
+        assignment ::= var '=' expr
+        '''
+        target = self.match(VAR)
+        if target is not None:
+            root = BinaryExprNode(self.match(ASSIGN))
+            root.addChild(VarNode(target))
+            root.addChild(self.expr())
+            return root
+        else:
+            self.error()
+
+    def chunk(self):
+        '''
+        Recursive-descent parsing procedure for chunk:
+        chunk ::= assignment +:
+        '''
+        root = ChunkNode(PhonyToken(CHUNK, 0))
+        root.addChild(self.assignment())
+
+        while(self.scanner.currentToken is not None and
+        self.scanner.currentToken.type is not EOF):
+            root.addChild(self.assignment())
+
+        return root
+
 ###########################################################
 # Top-level script tests
 ###########################################################
@@ -203,11 +271,8 @@ if __name__ == '__main__':
         if not text:
             continue
 
-        try:
-            scanner = Scanner(CharStream(text))
-            parser = Parser(scanner)
-            root = parser.expr()
-            visitor = PrintVisitor()
-            root.accept(visitor)
-        except Exception as e:
-            print(e)
+        scanner = Scanner(CharStream(text))
+        parser = Parser(scanner)
+        root = parser.chunk()
+        visitor = PrintVisitor()
+        root.accept(visitor)
