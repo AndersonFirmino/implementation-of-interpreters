@@ -72,8 +72,6 @@ class Car(CarElement):
         ]
 
     def accept(self, visitor):
-        for element in self.elements:
-            element.accept(visitor)
         visitor.visit(self)
 
 
@@ -88,6 +86,8 @@ class CarElementDoVisitor(CarElementVisitor):
         print("Kicking my {} wheel.".format(element.name))
 
     def visitCar(self, element):
+        for element in element.elements:
+            element.accept(self)
         print("Starting my engine.")
 
 
@@ -102,6 +102,8 @@ class CarElementPrintVisitor(CarElementVisitor):
         print("Visiting my {} wheel.".format(element.name))
 
     def visitCar(self, element):
+        for element in element.elements:
+            element.accept(self)
         print("Visiting my engine.")
 
 

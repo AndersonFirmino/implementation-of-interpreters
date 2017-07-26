@@ -50,8 +50,6 @@ class Car(CarElement):
         ]
 
     def accept(self, visitor):
-        for element in self.elements:
-            element.accept(visitor)
         visitor.visit(self)
 
 
@@ -64,6 +62,8 @@ class CarElementDoVisitor(CarElementVisitor):
         if self.element_type == Body:
             print("Moving my body.")
         elif self.element_type == Car:
+            for element in element.elements:
+                element.accept(self)
             print("Starting my car.")
         elif self.element_type == Wheel:
             print("Kicking my {} wheel.".format(element.name))
@@ -84,6 +84,8 @@ class CarElementPrintVisitor(CarElementVisitor):
         if self.element_type == Body:
             print("Visiting body.")
         elif self.element_type == Car:
+            for element in element.elements:
+                element.accept(self)
             print("Visiting car.")
         elif self.element_type == Wheel:
             print("Visiting {} wheel.".format(element.name))

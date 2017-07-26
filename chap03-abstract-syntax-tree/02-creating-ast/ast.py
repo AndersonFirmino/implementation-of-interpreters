@@ -48,8 +48,6 @@ class AbstractNodeVisitor:
 ###########################################################
 class BinaryExprNode(AbstractNode):
     def accept(self, visitor):
-        for node in self.children:
-            node.accept(visitor)
         visitor.visit(self)
 
 ###########################################################
@@ -64,6 +62,8 @@ class IntegerNode(AbstractNode):
 ###########################################################
 class PrintVisitor(AbstractNodeVisitor):
     def visitBinaryExprNode(self, node):
+        for child in node.children:
+            child.accept(self)
         print(node.token)
 
     def visitIntegerNode(self, node):
