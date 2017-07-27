@@ -1,12 +1,12 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     stmtlist ::= assignment +
-#     assignment ::= identifier '=' expr
-#     expr ::= term (('+'|'-') term)*
+#     statements ::= assignment +
+#     assignment ::= identifier '=' expression
+#     expression ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::= integer | ('+'|'-') factor | '(' expr ')' | identifier
-#     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
+#     factor ::= integer | ('+'|'-') factor | '(' expression ')' | identifier
+#     ( or factor ::= ('+'|'-')* (integer |'(' expression ')') )
 #     integer ::= digit +
 #     identifier ::= letter (letter | digit) *
 ###########################################################
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
             scanner = Scanner(CharStream(text))
             parser = Parser(scanner)
-            root = parser.stmtlist()
+            root = parser.statements()
             root.accept(interpreter)
             print(interpreter.symval)
         except EOFError:

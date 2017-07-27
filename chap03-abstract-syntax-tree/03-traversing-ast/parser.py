@@ -1,10 +1,10 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     expr ::= term (('+'|'-') term)*
+#     expression ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::= integer | ('+'|'-') factor | '(' expr ')'
-#     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
+#     factor ::= integer | ('+'|'-') factor | '(' expression ')'
+#     ( or factor ::= ('+'|'-')* (integer |'(' expression ')') )
 #     integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
 ###########################################################
 
@@ -134,7 +134,7 @@ class Parser:
     def factor(self):
         '''
         Recursive-descent parsing procedure for factor:
-        factor ::= integer | ('+'|'-') factor | '(' expr ')'
+        factor ::= integer | ('+'|'-') factor | '(' expression ')'
         '''
         token = self.scanner.currentToken
         if token.type in (PLUS, MINUS):
@@ -147,7 +147,7 @@ class Parser:
             return IntegerNode(token)
         elif token.type == LPAREN:
             self.match(LPAREN)
-            root = self.expr()
+            root = self.expression()
             self.match(RPAREN)
             return root
 
@@ -169,10 +169,10 @@ class Parser:
 
         return root
 
-    def expr(self):
+    def expression(self):
         '''
-        Recursive-descent parsing procedure for expr:
-        expr ::= term (('+'|'-') term)*
+        Recursive-descent parsing procedure for expression:
+        expression ::= term (('+'|'-') term)*
         '''
         root = self.term()
 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
         try:
             scanner = Scanner(CharStream(text))
             parser = Parser(scanner)
-            root = parser.expr()
+            root = parser.expression()
             visitor = PrintVisitor()
             root.accept(visitor)
         except Exception as e:

@@ -1,17 +1,17 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     stmtlist ::= assignment * returnstmt ?
-#     returnstmt ::= 'return' expr
-#     assignment ::= identifier '=' expr
-#     expr ::= term (('+'|'-') term)* | function
-#     arguments ::= (expr(',' expr)*)?
-#     function ::= 'function' '(' parameters ')' stmtlist 'end'
-#     parameters ::= (var(',' var)*) ?
+#     statements ::= assignment * returnstmt ?
+#     returnstmt ::= 'return' expression
+#     assignment ::= identifier '=' expression
+#     expression ::= term (('+'|'-') term)* | function
+#     arguments ::= (expression(',' expression)*)?
+#     function ::= 'function' '(' parameters ')' statements 'end'
+#     parameters ::= (identifier(',' identifier)*) ?
 #     term ::= factor (('*'|'/') factor)*
 #     factor ::= integer | ('+'|'-') factor | prefixexp
 #     ( or factor ::= ('+'|'-')* (integer | prefixexp) )
-#     prefixexp ::= (identifier | '(' expr ')') ('(' arguments ')')*
+#     prefixexp ::= (identifier | '(' expression ')') ('(' arguments ')')*
 #     integer ::= digit +
 #     identifier ::= letter (letter | digit) *
 ###########################################################
@@ -53,8 +53,8 @@ COMMA, FUNCTION, END, RETURN = (
 
 # Phony token types -- Used in creating AST nodes that don't derived from tokens
 # So, we can get node type va token.type
-STMTLIST, ARGUMENTS, PARAMETERS, CALL, DEFINE = (
-    'STMTLIST', 'ARGUMENTS', 'PARAMETER', 'CALL', 'DEFINE')
+STATEMENTS, ARGUMENTS, PARAMETERS, CALL, DEFINE = (
+    'STATEMENTS', 'ARGUMENTS', 'PARAMETERS', 'CALL', 'DEFINE')
 
 class Token:
     def __init__(self, type, text, position):
@@ -189,12 +189,12 @@ class Parser:
     def arguments(self):
         '''
         Recursive-descent parsing procedure for arguments:
-        arguments ::= (expr(',' expr)*)?
+        arguments ::= (expression(',' expression)*)?
         '''
         root = FunctionArgumentsNode(PhonyToken(ARGUMENTS, 0))
         while (self.scanner.currentToken is not None and
         self.scanner.currentToken.type is not RPAREN):
-            root.addChild(self.expr())
+            root.addChild(self.expression())
             if self.scanner.currentToken.type == COMMA:
                 self.scanner.nextToken()
         return root
@@ -202,7 +202,7 @@ class Parser:
     def parameters(self):
         '''
         Recursive-descent parsing procedure for parameters:
-        parameters ::= (var(',' var)*) ?
+        parameters ::= (identifier(',' identifier)*) ?
         '''
         root = FunctionParametersNode(PhonyToken(PARAMETERS, 0))
         while (self.scanner.currentToken is not None and
@@ -215,28 +215,28 @@ class Parser:
     def funcdef(self):
         '''
         Recursive-descent parsing procedure for function:
-        function ::= 'function' '(' parameters ')' stmtlist 'end'
+        function ::= 'function' '(' parameters ')' statements 'end'
         '''
         root = FunctionDefinitionNode(PhonyToken(DEFINE, 0))
         self.match(FUNCTION)
         self.match(LPAREN)
         root.addChild(self.parameters())
         self.match(RPAREN)
-        root.addChild(self.stmtlist())
+        root.addChild(self.statements())
         self.match(END)
         return root
 
     def prefixexp(self):
         '''
         Recursive-descent parsing procedure for prefixexp:
-        prefixexp ::= (identifier | '(' expr ')') ('(' arguments ')')*
+        prefixexp ::= (identifier | '(' expression ')') ('(' arguments ')')*
         '''
         root = None
         if self.scanner.currentToken.type == IDENTIFIER:
             root = IdentifierNode(self.match(IDENTIFIER))
         elif self.scanner.currentToken.type == LPAREN:
             self.match(LPAREN)
-            root = self.expr()
+            root = self.expression()
             self.match(RPAREN)
 
         while (self.scanner.currentToken is not None and
@@ -287,10 +287,10 @@ class Parser:
 
         return root
 
-    def expr(self):
+    def expression(self):
         '''
-        Recursive-descent parsing procedure for expr:
-        expr ::= term (('+'|'-') term)* | function
+        Recursive-descent parsing procedure for expression:
+        expression ::= term (('+'|'-') term)* | function
         '''
         if self.scanner.currentToken.type == FUNCTION:
             return self.funcdef()
@@ -311,30 +311,30 @@ class Parser:
     def assignment(self):
         '''
         Recursive-descent parsing procedure for assignment:
-        assignment ::= identifier '=' expr
+        assignment ::= identifier '=' expression
         '''
         target = self.match(IDENTIFIER)
         root = BinaryExpressionNode(self.match(ASSIGN))
         root.addChild(IdentifierNode(target))
-        root.addChild(self.expr())
+        root.addChild(self.expression())
         return root
 
     def returnstmt(self):
         '''
         Recursive-descent parsing procedure for returnstmt:
-        returnstmt ::= 'return' expr
+        returnstmt ::= 'return' expression
         '''
         token = self.match(RETURN)
         root = ReturnStatementNode(token)
-        root.addChild(self.expr())
+        root.addChild(self.expression())
         return root
 
-    def stmtlist(self):
+    def statements(self):
         '''
-        Recursive-descent parsing procedure for stmtlist:
-        stmtlist ::= assignment * returnstmt ?
+        Recursive-descent parsing procedure for statements:
+        statements ::= assignment * returnstmt ?
         '''
-        root = StatementListNode(PhonyToken(STMTLIST, 0))
+        root = StatementListNode(PhonyToken(STATEMENTS, 0))
 
         while (self.scanner.currentToken is not None and
         self.scanner.currentToken.type == IDENTIFIER):
@@ -364,6 +364,6 @@ if __name__ == '__main__':
 
         scanner = Scanner(CharStream(text))
         parser = Parser(scanner)
-        root = parser.stmtlist()
+        root = parser.statements()
         visitor = PrintVisitor()
         root.accept(visitor)

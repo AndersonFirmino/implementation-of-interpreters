@@ -1,10 +1,10 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     expr ::= term (('+'|'-') term)*
+#     expression ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::= integer | ('+'|'-') factor | '(' expr ')'
-#     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
+#     factor ::= integer | ('+'|'-') factor | '(' expression ')'
+#     ( or factor ::= ('+'|'-')* (integer |'(' expression ')') )
 #     integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
 ###########################################################
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         try:
             scanner = Scanner(CharStream(text))
             parser = Parser(scanner)
-            root = parser.expr()
+            root = parser.expression()
             interpreter = Interpreter()
             print(root.accept(interpreter))
         except Exception as e:

@@ -1,12 +1,12 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     stmtlist ::= assignment +
-#     assignment ::= identifier '=' expr
-#     expr ::= term (('+'|'-') term)*
+#     statements ::= assignment +
+#     assignment ::= identifier '=' expression
+#     expression ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::= integer | ('+'|'-') factor | '(' expr ')' | identifier
-#     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
+#     factor ::= integer | ('+'|'-') factor | '(' expression ')' | identifier
+#     ( or factor ::= ('+'|'-')* (integer |'(' expression ')') )
 #     integer ::= digit +
 #     identifier ::= letter (letter | digit) *
 ###########################################################
@@ -44,7 +44,7 @@ INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, IDENTIFIER, ASSIGN, EOF = (
 
 # Phony token types -- Used in creating AST nodes that don't derived from tokens
 # So, we can get node type va token.type
-STMTLIST = ('STMTLIST')
+STATEMENTS = ('STATEMENTS')
 
 class Token:
     def __init__(self, type, text, position):
@@ -169,7 +169,7 @@ class Parser:
     def factor(self):
         '''
         Recursive-descent parsing procedure for factor:
-        factor ::= integer | ('+'|'-') factor | '(' expr ')' | identifier
+        factor ::= integer | ('+'|'-') factor | '(' expression ')' | identifier
         '''
         token = self.scanner.currentToken
         if token.type in (PLUS, MINUS):
@@ -185,7 +185,7 @@ class Parser:
             return IdentifierNode(token)
         elif token.type == LPAREN:
             self.match(LPAREN)
-            root = self.expr()
+            root = self.expression()
             self.match(RPAREN)
             return root
         else:
@@ -209,10 +209,10 @@ class Parser:
 
         return root
 
-    def expr(self):
+    def expression(self):
         '''
-        Recursive-descent parsing procedure for expr:
-        expr ::= term (('+'|'-') term)*
+        Recursive-descent parsing procedure for expression:
+        expression ::= term (('+'|'-') term)*
         '''
         root = self.term()
 
@@ -230,23 +230,23 @@ class Parser:
     def assignment(self):
         '''
         Recursive-descent parsing procedure for assignment:
-        assignment ::= identifier '=' expr
+        assignment ::= identifier '=' expression
         '''
         target = self.match(IDENTIFIER)
         if target is not None:
             root = BinaryExpressionNode(self.match(ASSIGN))
             root.addChild(IdentifierNode(target))
-            root.addChild(self.expr())
+            root.addChild(self.expression())
             return root
         else:
             self.error()
 
-    def stmtlist(self):
+    def statements(self):
         '''
-        Recursive-descent parsing procedure for stmtlist:
-        stmtlist ::= assignment +
+        Recursive-descent parsing procedure for statements:
+        statements ::= assignment +
         '''
-        root = StatementListNode(PhonyToken(STMTLIST, 0))
+        root = StatementListNode(PhonyToken(STATEMENTS, 0))
         root.addChild(self.assignment())
 
         while(self.scanner.currentToken is not None and
@@ -273,6 +273,6 @@ if __name__ == '__main__':
 
         scanner = Scanner(CharStream(text))
         parser = Parser(scanner)
-        root = parser.stmtlist()
+        root = parser.statements()
         visitor = PrintVisitor()
         root.accept(visitor)

@@ -1,7 +1,7 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     expr ::= term (('+'|'-') term)*
+#     expression ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
 #     factor ::=integer
 #     integer ::= ('0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9')+
@@ -150,10 +150,10 @@ class Parser:
 
         return result
 
-    def expr(self):
+    def expression(self):
         '''
-        Recursive-descent parsing procedure for expr:
-        expr ::= term (('+'|'-') term)*
+        Recursive-descent parsing procedure for expression:
+        expression ::= term (('+'|'-') term)*
         '''
         result = self.term()
 
@@ -186,6 +186,6 @@ if __name__ == '__main__':
         try:
             scanner = Scanner(CharStream(text))
             parser = Parser(scanner)
-            print(parser.expr())
+            print(parser.expression())
         except Exception as e:
             print(e)
