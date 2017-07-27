@@ -1,14 +1,14 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     chunk ::= assignment +
-#     assignment ::= var '=' expr
+#     stmtlist ::= assignment +
+#     assignment ::= identifier '=' expr
 #     expr ::= term (('+'|'-') term)*
 #     term ::= factor (('*'|'/') factor)*
-#     factor ::= integer | ('+'|'-') factor | '(' expr ')' | var
+#     factor ::= integer | ('+'|'-') factor | '(' expr ')' | identifier
 #     ( or factor ::= ('+'|'-')* (integer |'(' expr ')') )
 #     integer ::= digit +
-#     var ::= letter (letter | digit) *
+#     identifier ::= letter (letter | digit) *
 ###########################################################
 
 from ast import *
@@ -24,7 +24,7 @@ class Interpreter(AbstractNodeVisitor):
         self.symval = {}      # variable values
         self.symtab = Scope() # global variables
 
-    def visitBinaryExprNode(self, node):
+    def visitBinaryExpressionNode(self, node):
         if node.token.type == PLUS:
             return self.visit(node.children[0]) + self.visit(node.children[1])
         elif node.token.type == MINUS:
@@ -44,22 +44,22 @@ class Interpreter(AbstractNodeVisitor):
     def visitIntegerNode(self, node):
         return int(node.token.text)
 
-    def visitUnaryExprNode(self, node):
+    def visitUnaryExpressionNode(self, node):
         if node.token.type == PLUS:
             return self.visit(node.children[0])
         elif node.token.type == MINUS:
             return -self.visit(node.children[0])
 
-    def visitVarNode(self, node):
+    def visitIdentifierNode(self, node):
         name = node.token.text
         sym = self.symtab.resolve(name)
         if sym is None:
-            raise Exception('{position} : Undefined symbol \'{name}\'!'.format(
+            raise Exception('{position}: Undefined symbol \'{name}\'!'.format(
                 position = node.token.position,
                 name = name))
         return self.symval[name]
 
-    def visitChunkNode(self, node):
+    def visitStatementListNode(self, node):
         for child in node.children:
             self.visit(child)
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
             scanner = Scanner(CharStream(text))
             parser = Parser(scanner)
-            root = parser.chunk()
+            root = parser.stmtlist()
             root.accept(interpreter)
             print(interpreter.symval)
         except EOFError:
