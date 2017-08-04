@@ -139,7 +139,7 @@ class Parser:
         token = self.scanner.currentToken
         if token.type in (PLUS, MINUS):
             self.scanner.nextToken()
-            root = UnaryExprNode(token)
+            root = UnaryExpressionNode(token)
             root.addChild(self.factor())
             return root
         elif token.type == INTEGER:

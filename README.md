@@ -16,6 +16,22 @@ The AST is next traversed to perform semantic analysis. Semantic analysis often 
 ### Code Generation
 Finally, the AST is traversed to generate a translation of the original program, i.e. code for a virtual machine.
 
+## Syntax
+
+    statements ::= assignment * returnstmt ?
+    returnstmt ::= 'return' expression
+    assignment ::= identifier '=' expression | 'function' identifier definition
+    expression ::= term (('+'|'-') term)* | function
+    arguments ::= (expression(',' expression)*)?
+    function ::= 'function' definition 
+    definition ::= '(' parameters ')' statements 'end'
+    parameters ::= (identifier(',' identifier)*) ?
+    term ::= factor (('*'|'/') factor)*
+    factor ::= integer | ('+'|'-') factor | prefixexp
+    prefixexp ::= (identifier | '(' expression ')') ('(' arguments ')')*
+    integer ::= digit +
+    identifier ::= letter (letter | digit) *
+
 ## References
 1. [Charles N. Fischer et al, Crafting a Compiler, 2009](https://www.pearsonhighered.com/program/Fischer-Crafting-A-Compiler/PGM315544.html)
 2. [Ronald Mak, Writing Compilers and Interpreters: A Software Engineering Approach, 3rd Edition](https://www.amazon.com/Writing-Compilers-Interpreters-Software-Engineering/dp/0470177071)

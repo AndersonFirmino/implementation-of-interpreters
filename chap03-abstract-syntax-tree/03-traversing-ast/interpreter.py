@@ -29,7 +29,7 @@ class Interpreter(AbstractNodeVisitor):
     def visitIntegerNode(self, node):
         return int(node.token.text)
 
-    def visitUnaryExprNode(self, node):
+    def visitUnaryExpressionNode(self, node):
         if node.token.type == PLUS:
             return self.visit(node.children[0])
         elif node.token.type == MINUS:

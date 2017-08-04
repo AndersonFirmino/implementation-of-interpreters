@@ -34,8 +34,8 @@ class AbstractNodeVisitor:
             return self.visitBinaryExpressionNode(node)
         elif isinstance(node, IntegerNode):
             return self.visitIntegerNode(node)
-        elif isinstance(node, UnaryExprNode):
-            return self.visitUnaryExprNode(node)
+        elif isinstance(node, UnaryExpressionNode):
+            return self.visitUnaryExpressionNode(node)
 
     @abstractmethod
     def visitBinaryExpressionNode(self, node):
@@ -46,7 +46,7 @@ class AbstractNodeVisitor:
         raise NotImplementedError(NOT_IMPLEMENTED)
 
     @abstractmethod
-    def visitUnaryExprNode(self, node):
+    def visitUnaryExpressionNode(self, node):
         raise NotImplementedError(NOT_IMPLEMENTED)
 
 ###########################################################
@@ -64,9 +64,9 @@ class IntegerNode(AbstractNode):
         return visitor.visit(self)
 
 ###########################################################
-# UnaryExprNode -- AST Node of Unary Expression
+# UnaryExpressionNode -- AST Node of Unary Expression
 ###########################################################
-class UnaryExprNode(AbstractNode):
+class UnaryExpressionNode(AbstractNode):
     def accept(self, visitor):
         return visitor.visit(self)
 
@@ -82,7 +82,7 @@ class PrintVisitor(AbstractNodeVisitor):
     def visitIntegerNode(self, node):
         print(node.token)
 
-    def visitUnaryExprNode(self, node):
+    def visitUnaryExpressionNode(self, node):
         for child in node.children:
             child.accept(self)
         print('{token} (Unary)'.format(token = node.token))
