@@ -146,7 +146,7 @@ class Parser:
             self.scanner.nextToken()
             lhs = root
             rhs = self.factor()
-            root = BinaryExprNode(token)
+            root = BinaryExpressionNode(token)
             root.addChild(lhs)
             root.addChild(rhs)
 
@@ -164,7 +164,7 @@ class Parser:
             self.scanner.nextToken()
             lhs = root
             rhs = self.term()
-            root = BinaryExprNode(token)
+            root = BinaryExpressionNode(token)
             root.addChild(lhs)
             root.addChild(rhs)
 

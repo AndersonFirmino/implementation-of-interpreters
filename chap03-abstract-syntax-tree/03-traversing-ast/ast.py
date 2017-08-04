@@ -30,15 +30,15 @@ class AbstractNodeVisitor:
     __metaclass__ = ABCMeta
 
     def visit(self, node):
-        if isinstance(node, BinaryExprNode):
-            return self.visitBinaryExprNode(node)
+        if isinstance(node, BinaryExpressionNode):
+            return self.visitBinaryExpressionNode(node)
         elif isinstance(node, IntegerNode):
             return self.visitIntegerNode(node)
         elif isinstance(node, UnaryExprNode):
             return self.visitUnaryExprNode(node)
 
     @abstractmethod
-    def visitBinaryExprNode(self, node):
+    def visitBinaryExpressionNode(self, node):
         raise NotImplementedError(NOT_IMPLEMENTED)
 
     @abstractmethod
@@ -50,9 +50,9 @@ class AbstractNodeVisitor:
         raise NotImplementedError(NOT_IMPLEMENTED)
 
 ###########################################################
-# BinaryExprNode -- AST Node of Expression
+# BinaryExpressionNode -- AST Node of Expression
 ###########################################################
-class BinaryExprNode(AbstractNode):
+class BinaryExpressionNode(AbstractNode):
     def accept(self, visitor):
         return visitor.visit(self)
 
@@ -74,7 +74,7 @@ class UnaryExprNode(AbstractNode):
 # PrintVisitor
 ###########################################################
 class PrintVisitor(AbstractNodeVisitor):
-    def visitBinaryExprNode(self, node):
+    def visitBinaryExpressionNode(self, node):
         for child in node.children:
             child.accept(self)
         print(node.token)
@@ -96,8 +96,8 @@ if __name__ == '__main__':
     operand2 = IntegerNode('2')
     operand3 = IntegerNode('5')
 
-    mult = BinaryExprNode('*')
-    root = BinaryExprNode('+')
+    mult = BinaryExpressionNode('*')
+    root = BinaryExpressionNode('+')
 
     mult.addChild(operand1)
     mult.addChild(operand2)

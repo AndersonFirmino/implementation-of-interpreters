@@ -3,10 +3,11 @@
 # Syntax:
 #     statements ::= assignment * returnstmt ?
 #     returnstmt ::= 'return' expression
-#     assignment ::= identifier '=' expression
+#     assignment ::= identifier '=' expression | 'function' identifier definition
 #     expression ::= term (('+'|'-') term)* | function
 #     arguments ::= (expression(',' expression)*)?
-#     function ::= 'function' '(' parameters ')' statements 'end'
+#     function ::= 'function' definition 
+#     definition ::= '(' parameters ')' statements 'end'
 #     parameters ::= (identifier(',' identifier)*) ?
 #     term ::= factor (('*'|'/') factor)*
 #     factor ::= integer | ('+'|'-') factor | prefixexp
@@ -212,13 +213,12 @@ class Parser:
                 self.scanner.nextToken()
         return root
 
-    def funcdef(self):
+    def definition(self):
         '''
         Recursive-descent parsing procedure for function:
-        function ::= 'function' '(' parameters ')' statements 'end'
+        definition ::= '(' parameters ')' statements 'end'
         '''
         root = FunctionDefinitionNode(PhonyToken(DEFINE, 0))
-        self.match(FUNCTION)
         self.match(LPAREN)
         root.addChild(self.parameters())
         self.match(RPAREN)
@@ -293,7 +293,8 @@ class Parser:
         expression ::= term (('+'|'-') term)* | function
         '''
         if self.scanner.currentToken.type == FUNCTION:
-            return self.funcdef()
+            self.match(FUNCTION)
+            return self.definition()
         else:
             root = self.term()
 
@@ -311,12 +312,25 @@ class Parser:
     def assignment(self):
         '''
         Recursive-descent parsing procedure for assignment:
-        assignment ::= identifier '=' expression
+        assignment ::= identifier '=' expression | 'function' identifier definition
         '''
-        target = self.match(IDENTIFIER)
-        root = BinaryExpressionNode(self.match(ASSIGN))
-        root.addChild(IdentifierNode(target))
-        root.addChild(self.expression())
+
+	root = None
+
+        if self.scanner.currentToken.type == FUNCTION:
+            self.match(FUNCTION)
+            target = self.match(IDENTIFIER)
+            # phony assign token
+            token = Token(ASSIGN, '=', self.scanner.charStream.position)
+            root = BinaryExpressionNode(token)
+            root.addChild(IdentifierNode(target))
+            root.addChild(self.definition())
+        else:
+            target = self.match(IDENTIFIER)
+            root = BinaryExpressionNode(self.match(ASSIGN))
+            root.addChild(IdentifierNode(target))
+            root.addChild(self.expression())
+
         return root
 
     def returnstmt(self):
@@ -337,7 +351,8 @@ class Parser:
         root = StatementListNode(PhonyToken(STATEMENTS, 0))
 
         while (self.scanner.currentToken is not None and
-        self.scanner.currentToken.type == IDENTIFIER):
+        self.scanner.currentToken.type == IDENTIFIER or 
+        self.scanner.currentToken.type == FUNCTION):
             root.addChild(self.assignment())
 
         if (self.scanner.currentToken is not None and

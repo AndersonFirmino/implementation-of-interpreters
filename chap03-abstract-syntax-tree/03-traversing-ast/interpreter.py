@@ -16,7 +16,7 @@ from parser import *
 # in visitors and method 'accept' in ASTs.
 ###########################################################
 class Interpreter(AbstractNodeVisitor):
-    def visitBinaryExprNode(self, node):
+    def visitBinaryExpressionNode(self, node):
         if node.token.type == PLUS:
             return self.visit(node.children[0]) + self.visit(node.children[1])
         elif node.token.type == MINUS:

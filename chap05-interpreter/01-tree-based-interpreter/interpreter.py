@@ -1,17 +1,18 @@
 ###########################################################
 # Implementation of an Simple Interpreter
 # Syntax:
-#     stmtlist ::= assignment * returnstmt ?
-#     returnstmt ::= 'return' expr
-#     assignment ::= identifier '=' expr
-#     expr ::= term (('+'|'-') term)* | function
-#     arguments ::= (expr(',' expr)*)?
-#     function ::= 'function' '(' parameters ')' stmtlist 'end'
-#     parameters ::= (var(',' var)*) ?
+#     statements ::= assignment * returnstmt ?
+#     returnstmt ::= 'return' expression
+#     assignment ::= identifier '=' expression | 'function' identifier definition
+#     expression ::= term (('+'|'-') term)* | function
+#     arguments ::= (expression(',' expression)*)?
+#     function ::= 'function' definition 
+#     definition ::= '(' parameters ')' statements 'end'
+#     parameters ::= (identifier(',' identifier)*) ?
 #     term ::= factor (('*'|'/') factor)*
 #     factor ::= integer | ('+'|'-') factor | prefixexp
 #     ( or factor ::= ('+'|'-')* (integer | prefixexp) )
-#     prefixexp ::= (identifier | '(' expr ')') ('(' arguments ')')*
+#     prefixexp ::= (identifier | '(' expression ')') ('(' arguments ')')*
 #     integer ::= digit +
 #     identifier ::= letter (letter | digit) *
 ###########################################################
